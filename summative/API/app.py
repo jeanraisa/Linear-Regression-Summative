@@ -11,10 +11,10 @@ model = joblib.load("insurance.joblib")
 # Define the data model
 class InputData(BaseModel):
     age: int
-    sex: int
+    sex: str
     bmi: float
     children: int
-    smoker: int
+    smoker: str
 
 
 # Initialize FastAPI
@@ -36,15 +36,17 @@ def read_root():
 
 @app.post("/predict")
 def predict(data: InputData):
-    # Convert input data to the required format for the model
-    input_data = np.array([[data.age, data.sex, data.bmi, data.children, data.smoker]])
+    # Encoding categorical variables
+    sex_encoded = 1 if data.sex == "male" else 0
+    smoker_encoded = 1 if data.smoker == "yes" else 0
+
+    # Prepare the input data for prediction
+    input_data = np.array(
+        [[data.age, sex_encoded, data.bmi, data.children, smoker_encoded]]
+    )
 
     # Make prediction
     prediction = model.predict(input_data)
 
     # Return the prediction as a response
     return {"prediction": round(prediction[0], 2)}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
